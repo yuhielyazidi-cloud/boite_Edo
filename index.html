@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Les 10 boîtes d’Edonit</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e6efff;--ink:#1b2340;--l:66%;--card-ink:#1b2340;--btn:#1b2340;--btn-ink:#fff;color-scheme:light dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12172b;--ink:#eef1ff;--l:40%;--card-ink:#fff;--btn:#fff;--btn-ink:#12172b}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka",system-ui,sans-serif;min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:20px 12px 48px}
+h1{font-size:clamp(1.6rem,6vw,2.3rem);margin:0 0 4px;text-align:center}
+.sub{text-align:center;margin:0 0 16px;opacity:.85}
+.dots{display:flex;gap:6px;justify-content:center;margin-bottom:18px}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--ink);opacity:.18;transition:.3s}
+.dots i.on{opacity:1;background:#2fbf71;transform:scale(1.15)}
+.box{--h:0;background:hsl(var(--h) 80% var(--l));color:var(--card-ink);border:3px solid var(--ink);border-radius:18px;padding:10px 9px 12px;box-shadow:0 5px 0 var(--ink);animation:pop .45s cubic-bezier(.3,1.5,.5,1)}
+.box>.head{font-weight:700;margin:0 0 8px 4px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.closed{text-align:center;padding:6px 0 4px}
+.lid{height:20px;margin:0 auto 10px;width:70%;background:var(--ink);border-radius:10px 10px 4px 4px;opacity:.9}
+.lid.up{animation:lift .5s forwards}
+@keyframes lift{to{transform:translateY(-26px) rotate(-14deg);opacity:0}}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:10px 18px;background:var(--btn);color:var(--btn-ink);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+button.ghost{background:transparent;color:var(--card-ink);text-decoration:underline;padding:6px}
+.q{font-size:1.15rem;font-weight:600;margin:4px 4px 10px}
+form{display:flex;gap:8px;margin:0 4px 6px;flex-wrap:wrap}
+input{flex:1 1 140px;min-width:0;font:inherit;padding:10px 12px;border-radius:12px;border:3px solid #1b2340;background:#fff;color:#1b2340}
+.msg{min-height:1.3em;margin:4px 4px 6px;font-weight:600}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.done{margin:0 4px 10px;font-weight:600}
+.win{text-align:center;padding:10px 0}
+.win .big{font-size:3rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Les 10 boîtes d’Edonit 🎁</h1>
+<p class="sub">Ouvre les boîtes pour voir ta surprise 🎁</p>
+<div class="dots" id="dots" aria-hidden="true"></div>
+<div id="stage"></div>
+</main>
+<script>
+var Q=[
+{q:"Quelle est la capitale de la France ?",a:["paris"],h:"On y voit la tour Eiffel."},
+{q:"Combien de pattes a une araignée ?",a:["8","huit"],h:"Plus que 6, moins que 10."},
+{q:"Quelle est la planète la plus proche du Soleil ?",a:["mercure"],h:"Son nom ressemble à un métal liquide."},
+{q:"Combien font 7 × 8 ?",a:["56","cinquante-six","cinquante six"],h:"5, 6, 7, 8… 56 = 7 × 8 !"},
+{q:"Quel animal est surnommé le roi de la jungle ?",a:["lion"],h:"Il rugit et a une grosse crinière."},
+{q:"Quelle couleur obtient-on en mélangeant du bleu et du jaune ?",a:["vert"],h:"La couleur de l’herbe."},
+{q:"Quelle est la capitale du Japon ?",a:["tokyo"],h:"Elle commence par T."},
+{q:"Combien de joueurs une équipe de football a-t-elle sur le terrain ?",a:["11","onze"],h:"Gardien compris."},
+{q:"Quel est le plus grand océan du monde ?",a:["pacifique"],h:"Son nom veut dire « paisible »."},
+{q:"Dernière boîte ! Quel est le prénom de la personne pour qui ce jeu a été fait ?",a:["edonit"],h:"C’est toi, champion !"}
+];
+var stage=document.getElementById("stage"),dots=document.getElementById("dots"),tries=0;
+function norm(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 -]/g," ").replace(/\s+/g," ").trim()}
+function ok(i,v){var n=norm(v);if(!n)return false;var w=n.split(" ");return Q[i].a.some(function(a){return n===a||w.indexOf(a)>-1})}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e}
+function start(){tries=0;stage.innerHTML="";dots.innerHTML="";for(var i=0;i<10;i++)dots.appendChild(el("i"));make(stage,0)}
+function make(parent,i){
+ var b=el("div","box");b.style.setProperty("--h",(i*36+8)%360);
+ b.appendChild(el("div","head","Boîte "+(i+1)+" sur 10"));
+ var slot=el("div","closed"),lid=el("div","lid"),btn=el("button",0,"Ouvrir la boîte");
+ slot.appendChild(lid);slot.appendChild(btn);b.appendChild(slot);parent.appendChild(b);
+ b.scrollIntoView({behavior:"smooth",block:"center"});
+ btn.onclick=function(){lid.className="lid up";btn.disabled=true;setTimeout(function(){question(b,slot,i)},420)};
+}
+function question(b,slot,i){
+ slot.className="";slot.innerHTML="";
+ slot.appendChild(el("div","q",Q[i].q));
+ var f=el("form"),inp=el("input"),go=el("button",0,"Valider"),msg=el("div","msg"),hint=el("button","ghost","Un indice ?");
+ inp.type="text";inp.autocomplete="off";inp.autocapitalize="off";inp.placeholder="Ta réponse…";inp.setAttribute("aria-label","Ta réponse");
+ go.type="submit";hint.type="button";
+ f.appendChild(inp);f.appendChild(go);slot.appendChild(f);slot.appendChild(msg);slot.appendChild(hint);
+ inp.focus({preventScroll:true});
+ hint.onclick=function(){msg.textContent="💡 "+Q[i].h};
+ f.onsubmit=function(e){
+  e.preventDefault();
+  if(ok(i,inp.value)){
+   dots.children[i].className="on";
+   slot.innerHTML="";slot.appendChild(el("div","done","✅ "+Q[i].q.replace(/^Dernière boîte ! /,"")+" → "+inp.value.trim()));
+   if(i<9)make(b,i+1);else win(b);
+  }else{
+   tries++;msg.textContent="Pas encore… essaie encore ! 🤔";
+   f.className="shake";setTimeout(function(){f.className=""},400);inp.select();
+  }
+ };
+}
+function win(b){
+ var w=el("div","win");w.appendChild(el("div","big","😏🤣"));
+ w.appendChild(el("h2",0,"Nan en fait y a rien…"));
+ w.appendChild(el("p",0,"Je voulais juste te faire perdre ton temps hehe"));
+ w.appendChild(el("p",0,"("+(tries?tries+" erreur"+(tries>1?"s":"")+" en chemin, en plus 😂":"zéro erreur, bien joué quand même 👏")+")"));
+ var r=el("button",0,"Rejouer");r.onclick=start;w.appendChild(r);
+ b.appendChild(w);w.scrollIntoView({behavior:"smooth",block:"center"});
+}
+start();
+</script>
+</body>
+</html>
